@@ -1,0 +1,195 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: CloudVault - Secure Cloud File Storage and Sharing Platform
+
+Parameters:
+  MongoDBUri:
+    Type: String
+    Description: MongoDB Atlas connection string
+    NoEcho: true
+
+  JWTSecret:
+    Type: String
+    Description: JWT signing secret (minimum 64 characters)
+    NoEcho: true
+
+  AllowedOrigins:
+    Type: String
+    Description: "Comma-separated list of allowed CORS origins (e.g. https://your-app.amplifyapp.com)"
+    Default: "http://localhost:5173"
+
+  Environment:
+    Type: String
+    Description: Deployment environment
+    Default: production
+    AllowedValues: [development, staging, production]
+
+  S3Region:
+    Type: String
+    Description: "AWS region where the S3 storage bucket is located (e.g. us-east-1)"
+    Default: "us-east-1"
+
+Globals:
+  Function:
+    Runtime: nodejs24.x
+    Timeout: 30
+    MemorySize: 512
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        MONGODB_URI: !Ref MongoDBUri
+        JWT_SECRET: !Ref JWTSecret
+        S3_REGION: !Ref S3Region
+        S3_BUCKET_NAME: !Ref CloudVaultBucket
+        ALLOWED_ORIGINS: !Ref AllowedOrigins
+        MAX_FILE_SIZE: "26214400"
+        STORAGE_QUOTA: "1073741824"
+
+Resources:
+  # =========================================================
+  # S3 Bucket — private, encrypted
+  # =========================================================
+  CloudVaultBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "cloudvault-files-${AWS::AccountId}-${AWS::Region}"
+      # Block ALL public access
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      # Server-side encryption
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # CORS for browser-to-S3 direct uploads
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ["*"]
+            AllowedMethods: [GET, POST, PUT]
+            AllowedOrigins:
+              - !Ref AllowedOrigins
+              - "http://localhost:5173"
+            ExposeHeaders: [ETag]
+            MaxAge: 3000
+      # Lifecycle: clean up failed multipart uploads
+      LifecycleConfiguration:
+        Rules:
+          - Id: AbortIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+      VersioningConfiguration:
+        Status: Suspended
+
+  # =========================================================
+  # Lambda Execution Role — least privilege
+  # =========================================================
+  CloudVaultLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "CloudVaultLambdaRole-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CloudVaultS3Policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:HeadObject
+                  - s3:DeleteObject
+                  - s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${CloudVaultBucket}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${CloudVaultBucket}"
+              # Allow generating presigned URLs (requires S3 permissions only)
+
+  # =========================================================
+  # Lambda Function
+  # =========================================================
+  CloudVaultFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "cloudvault-api-${Environment}"
+      CodeUri: server/
+      Handler: lambda.handler
+      Role: !GetAtt CloudVaultLambdaRole.Arn
+      Description: CloudVault API — Express.js on AWS Lambda
+      # Function URL with CORS (no API Gateway required)
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowCredentials: true
+          AllowHeaders:
+            - authorization
+            - content-type
+            - x-requested-with
+          AllowMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+          AllowOrigins:
+            - !Ref AllowedOrigins
+            - "http://localhost:5173"
+          MaxAge: 86400
+      # API Gateway HTTP API (v2) events
+      Events:
+        ApiGatewayProxy:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        ApiGatewayRoot:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
+      # CloudWatch logs retention
+      LoggingConfig:
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: INFO
+    Metadata:
+      BuildMethod: nodejs24.x
+
+  # =========================================================
+  # CloudWatch Log Group — with retention
+  # =========================================================
+  CloudVaultLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/cloudvault-api-${Environment}"
+      RetentionInDays: 14
+
+Outputs:
+  ApiGatewayUrl:
+    Description: API Gateway HTTP API Endpoint URL — use this as VITE_API_BASE_URL in your frontend
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+
+  LambdaFunctionUrl:
+    Description: Lambda Function URL — use this as VITE_API_BASE_URL in your frontend
+    Value: !GetAtt CloudVaultFunctionUrl.FunctionUrl
+
+  S3BucketName:
+    Description: S3 bucket name for file storage
+    Value: !Ref CloudVaultBucket
+
+  LambdaFunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt CloudVaultFunction.Arn
+
+  LambdaRoleArn:
+    Description: Lambda execution role ARN
+    Value: !GetAtt CloudVaultLambdaRole.Arn
