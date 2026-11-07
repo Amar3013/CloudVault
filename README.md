@@ -1,229 +1,407 @@
-# CloudVault: Secure Cloud File Storage and Sharing Platform
+# CloudVault ☁️
+### Production-Grade Serverless Cloud Storage & File Sharing Platform
 
-[![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-orange?logo=amazon-aws)](https://aws.amazon.com/lambda/)
-[![Amazon S3](https://img.shields.io/badge/Amazon-S3-569A31?logo=amazon-s3)](https://aws.amazon.com/s3/)
-[![AWS Amplify](https://img.shields.io/badge/AWS-Amplify-FF9900?logo=aws-amplify)](https://aws.amazon.com/amplify/)
-[![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb)](https://www.mongodb.com/cloud/atlas)
-[![Tests: 23 Passed](https://img.shields.io/badge/Vitest-23%20Passed-brightgreen)](file:///c:/Users/linge/Desktop/CloudVault/server/tests)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Live Application](https://img.shields.io/badge/Live%20Demo-AWS%20Amplify-FF9900?logo=aws-amplify&style=for-the-badge)](https://main.d76gjzk4d8q8b.amplifyapp.com)
+[![Backend API](https://img.shields.io/badge/API%20Gateway-ap--southeast--2-FF4F8B?logo=amazon-api-gateway&style=for-the-badge)](https://tnn1ahid34.execute-api.ap-southeast-2.amazonaws.com/api/health)
+[![S3 Storage](https://img.shields.io/badge/Amazon%20S3-us--east--1-569A31?logo=amazon-s3&style=for-the-badge)](https://aws.amazon.com/s3/)
+[![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas%20Cloud-47A248?logo=mongodb&style=for-the-badge)](https://www.mongodb.com/cloud/atlas)
+[![Vitest](https://img.shields.io/badge/Tests-40%2F40%20Passing-brightgreen?logo=vitest&style=for-the-badge)](server/tests)
 
 ---
 
-## Academic Project Submission Dossier
+## 📑 Table of Contents
 
-> **Course**: Cloud Computing (CS / IT)  
-> **Course Assignment**: Cloud Computing Project (40 Points)  
-> **Faculty / Evaluator**: Prof. Bharati Mishra  
-> **Due Date**: November 10, 2026 — 11:59 PM  
-> **Group Formation**: 3 Students per group  
-> **Deployment Offering**: Amazon Web Services (AWS) Serverless + MongoDB Atlas Cloud  
-
-### Deliverables Quick-Reference
-
-| Deliverable | Description | Link |
-| :--- | :--- | :--- |
-| **Project Report** | Full academic report covering Problem Statement, Objectives, Architecture, Cloud Services, Implementation, Results & Conclusion | **[PROJECT_REPORT.md](file:///c:/Users/linge/Desktop/CloudVault/PROJECT_REPORT.md)** |
-| **10-Min Video Script** | Minute-by-minute speaking script & visual instructions distributed across 3 group members | **[PRESENTATION_VIDEO_SCRIPT.md](file:///c:/Users/linge/Desktop/CloudVault/docs/PRESENTATION_VIDEO_SCRIPT.md)** |
-| **Submission Checklist** | Fast evaluation checklist, rubric mapping & test execution guide | **[SUBMISSION_GUIDE.md](file:///c:/Users/linge/Desktop/CloudVault/docs/SUBMISSION_GUIDE.md)** |
-| **Cloud Deployment Guide** | Step-by-step instructions for AWS Lambda, S3, Amplify & MongoDB Atlas | **[DEPLOYMENT.md](file:///c:/Users/linge/Desktop/CloudVault/DEPLOYMENT.md)** |
-| **System Architecture** | Technical sequence diagrams, security design, and flowcharts | **[architecture.md](file:///c:/Users/linge/Desktop/CloudVault/docs/architecture.md)** |
-| **REST API Reference** | Complete endpoint documentation, request/response formats | **[api-documentation.md](file:///c:/Users/linge/Desktop/CloudVault/docs/api-documentation.md)** |
+- [Overview](#-overview)
+- [System Architecture](#-system-architecture)
+- [Key Features](#-key-features)
+- [Technology Stack](#-technology-stack)
+- [Direct S3 Upload & Download Workflows](#-direct-s3-upload--download-workflows)
+- [Production Deployment](#-production-deployment)
+- [Security & Tenant Isolation](#-security--tenant-isolation)
+- [Testing & Quality Assurance](#-testing--quality-assurance)
+- [Local Development Setup](#-local-development-setup)
+- [Project Structure](#-project-structure)
+- [User Interface & Screenshots](#-user-interface--screenshots)
+- [API Reference](#-api-reference)
+- [License](#-license)
 
 ---
 
-## 1. Problem Statement & Motivation
+## 🌟 Overview
 
-Modern engineering applications require secure, scalable, and cost-effective document storage. Traditional architectures that stream large file buffers through monolithic backend servers suffer from memory saturation, connection exhaustion, and high bandwidth costs. 
+**CloudVault** is a secure, full-stack, cloud-native file storage and sharing platform engineered with modern serverless architecture. It enables users to upload, organize, search, share, and manage documents, media, and archives with enterprise-grade isolation and zero server streaming bottleneck.
 
-CloudVault addresses these challenges through:
-- **Direct Browser-to-S3 Uploads**: Files stream directly from the client to a private Amazon S3 bucket using cryptographically signed **S3 Presigned POST policies**, completely bypassing the application server.
-- **Serverless Compute**: An Express.js REST API adapted for **AWS Lambda (Node.js 24 runtime)** ensures zero idle compute costs, automatic scaling, and instant warm invocation.
-- **Cryptographic Ephemeral Sharing**: Time-limited sharing tokens hashed via **SHA-256** allow public, revocable access without ever exposing private bucket policies or AWS credentials.
-- **Application-Level Quota Management**: Enforces a strict 1 GB per-user storage allocation, tracking real-time utilization down to the byte.
-- **Zero-Cost Operation**: Engineered to run 100% within the **AWS Free Tier** and **MongoDB Atlas Free Tier** (\$0.00 operational demonstration cost).
-
----
-
-## 2. Key Features
-
-- **Direct-to-S3 Multipart Uploads**: Upload files up to 25 MB with live progress indicators and client/server validation.
-- **Secure File Downloads**: Dynamic presigned S3 URLs generated with 15-minute expirations and forced attachment download disposition.
-- **Folder Hierarchy & Navigation**: Nested folder structures with instant breadcrumb path traversal.
-- **File Organization**: Grid and table views, real-time search, file-type filtering, multi-field sorting, and star bookmarks.
-- **Trash & Soft Deletion**: Two-stage deletion lifecycle allowing safe file recovery or permanent purge from S3.
-- **Time-Limited Public Sharing**: Generate shareable links expiring in 1 hour, 24 hours, or 7 days with instantaneous owner revocation.
-- **Real-Time Storage Meter**: Visual progress bar tracking storage usage against the 1 GB user quota.
-- **Enterprise Security**: Password hashing with `bcrypt` (work factor 12), stateless JWT session tokens, Helmet security headers, CORS origin allowlists, and API rate limiting.
-- **Serverless Ready**: Fully configured for AWS SAM deployment on AWS Lambda Function URLs with zero API Gateway overhead.
+### Core Engineering Highlights:
+- **Zero-Compute Streaming Bottleneck**: Files stream directly between the browser and Amazon S3 using cryptographically signed **S3 Presigned POST policies**, keeping Lambda execution durations minimal and eliminating API Gateway 10 MB payload limits.
+- **Serverless & Scalable**: Node.js/Express API running on **AWS Lambda** (`nodejs24.x`) behind **Amazon API Gateway HTTP API v2** with managed connection pooling to **MongoDB Atlas**.
+- **Cross-Region Decoupling**: Compute runs in Sydney (`ap-southeast-2`) while storage is securely maintained in N. Virginia (`us-east-1`) via dynamic region resolution and execution roles.
+- **Strict Tenant Isolation**: User files are partitioned in S3 under dedicated user prefixes (`users/{userId}/*`) and guarded by database ownership assertions and JWT authorization.
+- **Quota & Lifecycle Enforcement**: Real-time quota calculation (1 GB per user) encompassing active and pending uploads, paired with a two-phase deletion lifecycle (Trash recovery and permanent purge).
 
 ---
 
-## 3. Technology Stack
-
-| Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Frontend** | React 19, Vite 8 | High-performance SPA with fast hot-module replacement |
-| **Styling & UI** | Tailwind CSS v4, Lucide React | Minimalist SaaS aesthetic, clean cards, subtle shadows |
-| **Routing & HTTP**| React Router DOM v7, Axios | Client-side route guards and HTTP interceptors |
-| **Backend API** | Node.js, Express.js | Modular REST API with controllers, services, and routes |
-| **Validation** | Zod | Runtime schema validation for all incoming payloads |
-| **Database** | MongoDB Atlas, Mongoose | Flexible metadata indexing, user schemas, and TTL links |
-| **Cloud Storage** | Amazon S3 | Private, AES-256 encrypted binary object storage |
-| **Cloud Compute** | AWS Lambda (`nodejs24.x`) | Serverless compute exposed via Lambda Function URL |
-| **Monitoring** | Amazon CloudWatch | JSON-formatted structured application logging |
-| **Testing** | Vitest, Supertest | Fast unit and integration tests with S3/DB mock adapters |
-
----
-
-## 4. System Architecture
+## 🏗 System Architecture
 
 ```mermaid
 flowchart TB
-    subgraph ClientLayer ["Client Layer"]
-        Browser(["User Browser\n(React 19 + Tailwind)"])
+    subgraph Client ["Client Layer"]
+        UserBrowser["User Browser\n(React 19 + Vite + Tailwind CSS)"]
     end
 
-    subgraph EdgeLayer ["Hosting & Edge"]
-        Amplify["AWS Amplify Hosting\n(Global CDN & Static Web App)"]
+    subgraph CDN ["Frontend Edge Hosting"]
+        Amplify["AWS Amplify Hosting\n(Global CDN & SPA Routing)"]
     end
 
-    subgraph ComputeLayer ["Serverless Compute"]
-        FuncURL["AWS Lambda Function URL\n(HTTPS Entrypoint + Managed CORS)"]
-        Lambda["AWS Lambda Function\n(Express.js on Node.js 24)"]
+    subgraph Compute ["Serverless Backend (ap-southeast-2)"]
+        APIGW["Amazon API Gateway v2\n(HTTP API / CORS Managed)"]
+        Lambda["AWS Lambda Function\n(Node.js 24 + Express + Serverless Adapter)"]
+        IAM["IAM Execution Role\n(Default Credential Provider Chain)"]
+        IAM -.->|"Temporary Credentials"| Lambda
     end
 
-    subgraph StorageLayer ["Cloud Data & Object Storage"]
-        S3[("Amazon S3 Bucket\n(Private & AES-256 Encrypted)")]
-        Atlas[("MongoDB Atlas\n(Metadata, Users, ShareLinks)")]
+    subgraph Database ["Metadata Store"]
+        Atlas[("MongoDB Atlas Cloud\n(Users, Files, Folders, ShareLinks)")]
     end
 
-    subgraph ObservabilityLayer ["Observability"]
-        CloudWatch["Amazon CloudWatch\n(JSON Structured Telemetry)"]
+    subgraph Storage ["Object Storage (us-east-1)"]
+        S3[("Amazon S3 Bucket\n(cloudvault-storage-amar-2026)\n• Private Bucket\n• Block Public Access\n• AES-256 Encryption")]
     end
 
-    Browser -->|"1. Static App"| Amplify
-    Browser -->|"2. API Calls (JWT Bearer)"| FuncURL
-    FuncURL --> Lambda
-    Browser -->|"3. Direct S3 Upload (Presigned POST)"| S3
-    Browser -->|"4. Direct S3 Download (Presigned GET)"| S3
-    Lambda -->|"5. HeadObject & DeleteObject"| S3
-    Lambda -->|"6. Metadata Queries"| Atlas
-    Lambda -->|"7. Structured Logs"| CloudWatch
+    UserBrowser -->|"1. Load Static App"| Amplify
+    UserBrowser -->|"2. Authenticated API Calls (JWT)"| APIGW
+    APIGW -->|"3. Proxy Request"| Lambda
+    Lambda -->|"4. Query/Update Metadata"| Atlas
+    Lambda -->|"5. Generate Presigned Policy / Validate"| S3
+    UserBrowser ==>|"6. Direct Upload (Presigned POST)"| S3
+    UserBrowser ==>|"7. Direct Download (Presigned GET)"| S3
 ```
 
 ---
 
-## 5. Project Folder Structure
+## ✨ Key Features
 
+| Feature | Description |
+|---|---|
+| **Authentication & Session** | Secure user registration and login with `bcrypt` (10 salt rounds) and stateless `jsonwebtoken` Bearer tokens. |
+| **Direct Browser-to-S3 Upload** | Files upload directly to Amazon S3 via presigned POST policies with file-type and 25 MB size constraint policies. |
+| **Secure Presigned Downloads** | Downloads generate time-limited (15-minute) signed GET URLs with forced `attachment; filename="..."` disposition. |
+| **Hierarchical Folders** | Create, rename, nest, and delete folders with dynamic breadcrumb navigation. |
+| **Search, Filter & Sort** | Real-time case-insensitive search, multi-field sorting (Date, Name, Size), and quick filter views. |
+| **Starred & Recent Views** | Toggle star bookmarks on important documents; dedicated views for starred and recently uploaded files. |
+| **Two-Stage Deletion (Trash)** | Soft delete files to Trash (`isDeleted: true`), restore accidentally deleted files, or permanently delete them from S3. |
+| **Time-Limited File Sharing** | Generate cryptographically signed public share links with customizable expiration (`1h`, `24h`, `7d`). |
+| **Storage Quota Enforcement** | 1 GB storage limit per user, calculated dynamically from active files and recent in-flight pending uploads. |
+| **Automatic Direct Fallback** | Transparent fallback to backend multipart upload if client S3 direct upload encounters strict local network or CORS blocks. |
+| **Strict File Validation** | Client-side and server-side validation against blocked dangerous extensions (`.exe`, `.sh`, `.bat`, etc.) and allowed MIME types. |
+
+---
+
+## 🛠 Technology Stack
+
+### Frontend
+- **Framework**: React 19 (`react` 19.3.1, `react-dom` 19.3.1)
+- **Build Tool**: Vite 8 (`vite` 8.3.5)
+- **Styling**: Tailwind CSS v4 (`@tailwindcss/vite` 4.3.3)
+- **Routing**: React Router DOM v7 (`react-router-dom` 7.18.5)
+- **Icons**: Lucide React (`lucide-react` 1.66.0)
+- **HTTP Client**: Axios (`axios` 1.21.0)
+- **Hosting**: AWS Amplify Hosting
+
+### Backend & Cloud Compute
+- **Runtime**: Node.js 22 (local dev) / Node.js 24 (`nodejs24.x` in AWS Lambda)
+- **Web Framework**: Express.js (`express` 4.21.2)
+- **Serverless Adapter**: `@codegenie/serverless-express` 4.16.0
+- **API Management**: Amazon API Gateway (HTTP API v2)
+- **Infrastructure as Code**: AWS Serverless Application Model (AWS SAM `template.yaml`)
+
+### Storage & Database
+- **Object Storage**: Amazon S3 via AWS SDK for JavaScript v3 (`@aws-sdk/client-s3`, `@aws-sdk/s3-presigned-post`, `@aws-sdk/s3-request-presigner` 3.731.1)
+- **Database & ODM**: MongoDB Atlas Cloud with Mongoose (`mongoose` 8.9.5)
+- **File Upload Parsing**: Formidable (`formidable` 3.5.2)
+
+### Security & Utilities
+- **Authentication**: JWT (`jsonwebtoken` 9.0.2) + Bcrypt (`bcryptjs` 2.4.3)
+- **Request Validation**: Zod (`zod` 3.24.1)
+- **Rate Limiting**: `express-rate-limit` 7.5.0
+- **Security Headers & CORS**: `helmet` 8.0.0, `cors` 2.8.5
+- **Unique Identifiers**: `uuid` 11.0.5
+
+### Quality Assurance & Testing
+- **Test Framework**: Vitest 3.2.7 (`vitest`)
+- **HTTP Testing**: Supertest 7.0.0 (`supertest`)
+- **Linter**: Oxlint 1.89.0 (`oxlint`)
+
+---
+
+## 🔄 Direct S3 Upload & Download Workflows
+
+### 1. Upload Workflow (Two-Phase Presigned POST)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User Browser
+    participant API as Lambda Backend
+    participant DB as MongoDB Atlas
+    participant S3 as Amazon S3
+
+    User->>API: POST /api/files/upload-url { filename, mimeType, size, folderId }
+    Note over API: 1. Validate file extension & MIME<br/>2. Enforce 25 MB file limit<br/>3. Verify 1 GB user quota
+    API->>DB: Create file record (status: "pending")
+    API->>S3: Generate S3 Presigned POST Policy (Conditions, Credentials)
+    API-->>User: Return { uploadData: { url, fields }, fileId }
+    User->>S3: POST <uploadData.url> with FormData (fields + binary file)
+    S3-->>User: HTTP 204 No Content
+    User->>API: POST /api/files/confirm { fileId }
+    API->>S3: HeadObject(objectKey)
+    S3-->>API: ContentLength, MIME metadata
+    API->>DB: Update file status to "active", increment user storageUsed
+    API-->>User: Return { file: updatedDocument }
 ```
-CloudVault/
-├── client/                     # React 19 Frontend
-│   ├── src/
-│   │   ├── components/         # FileIcon, Modal, UploadButton
-│   │   ├── context/            # AuthContext (state & session management)
-│   │   ├── hooks/              # useFileUpload (direct S3 streaming)
-│   │   ├── layouts/            # DashboardLayout (responsive sidebar & topbar)
-│   │   ├── pages/              # Landing, Login, Register, Dashboard, MyFiles, etc.
-│   │   ├── services/           # Axios client & FileService API calls
-│   │   ├── utils/              # Formatters & file type helpers
-│   │   ├── App.jsx             # Route definitions & guards
-│   │   └── main.jsx            # React root mount
-│   ├── vite.config.js          # Vite config with Tailwind plugin & proxy
-│   └── package.json
-│
-├── server/                     # Express.js REST API
-│   ├── config/                 # MongoDB connection & AWS SDK v3 client
-│   ├── controllers/            # auth, file, folder, share, dashboard controllers
-│   ├── middleware/             # JWT auth, Zod validation, error handler
-│   ├── models/                 # Mongoose schemas (User, File, Folder, ShareLink)
-│   ├── routes/                 # Express route definitions
-│   ├── services/               # AWS S3 presigned URL generator & manager
-│   ├── tests/                  # Automated Vitest test suites
-│   ├── app.js                  # Express application setup
-│   ├── lambda.js               # AWS Lambda serverless-http entrypoint
-│   └── package.json
-│
-├── docs/                       # Technical Documentation
-│   ├── PROJECT_REPORT.md       # Complete academic project report
-│   ├── PRESENTATION_VIDEO_SCRIPT.md # 10-minute video presentation guide
-│   ├── SUBMISSION_GUIDE.md     # Rubric checklist & evaluation steps
-│   ├── architecture.md         # Detailed sequence diagrams & security design
-│   ├── api-documentation.md    # Complete REST API reference
-│   └── testing.md              # Quality assurance & demo checklist
-│
-├── PROJECT_REPORT.md           # Root academic project report (Deliverable 1)
-├── template.yaml               # AWS SAM Infrastructure as Code template
-├── amplify.yml                 # AWS Amplify frontend build configuration
-├── DEPLOYMENT.md               # Step-by-step AWS deployment walkthrough
-└── README.md                   # Project overview & navigation
+
+### 2. Download Workflow (Presigned GET)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User Browser
+    participant API as Lambda Backend
+    participant DB as MongoDB Atlas
+    participant S3 as Amazon S3
+
+    User->>API: GET /api/files/:id/download (Authorization: Bearer <token>)
+    API->>DB: Find active file owned by requesting userId
+    Note over API: Generates GetObjectCommand with<br/>ResponseContentDisposition: attachment
+    API->>S3: Generate Presigned GET URL (15-min expiry)
+    API-->>User: Return { url: "https://...s3.amazonaws.com/..." }
+    User->>S3: GET <Presigned_URL>
+    S3-->>User: Binary Stream (browser downloads file directly)
 ```
 
 ---
 
-## 6. Local Development Setup
+## 🚀 Production Deployment
+
+| Service | Region | Role / Configuration |
+|---|---|---|
+| **AWS Amplify** | Global Edge | Hosts static React SPA, manages automated Git CI/CD deployments, and handles SPA URL rewrites. |
+| **Amazon API Gateway** | `ap-southeast-2` | HTTP API v2 providing managed HTTPS endpoints, automated CORS, and direct Lambda proxy integration. |
+| **AWS Lambda** | `ap-southeast-2` | Executes the Express.js backend on `nodejs24.x`. Reuses database connection pool across invocations. |
+| **IAM Execution Role** | `ap-southeast-2` | Grants Lambda least-privilege permissions to S3 (`PutObject`, `GetObject`, `DeleteObject`) using the default AWS credential provider chain. |
+| **Amazon S3** | `us-east-1` | Stores all encrypted file objects (`cloudvault-storage-amar-2026`). Configured with Block Public Access and AES-256 encryption. |
+| **MongoDB Atlas** | AWS Cloud | Multi-AZ cluster hosting collections for `users`, `files`, `folders`, and `sharelinks`. |
+
+### Live Endpoints
+- **Production Web Application**: [https://main.d76gjzk4d8q8b.amplifyapp.com](https://main.d76gjzk4d8q8b.amplifyapp.com)
+- **Backend Health Check**: [https://tnn1ahid34.execute-api.ap-southeast-2.amazonaws.com/api/health](https://tnn1ahid34.execute-api.ap-southeast-2.amazonaws.com/api/health)
+
+---
+
+## 🔒 Security & Tenant Isolation
+
+- **Private S3 Bucket**: All public read/write access is blocked via S3 Block Public Access (`BlockPublicAcls`, `BlockPublicPolicy`, `IgnorePublicAcls`, `RestrictPublicBuckets`). Direct unauthenticated requests to S3 return `403 Forbidden` or `400 Bad Request`.
+- **User-Partitioned S3 Keys**: Object keys are structured as `users/${userId}/${uuidv4()}` ensuring physical separation across tenants.
+- **Server-Side Encryption**: All uploaded objects enforce Amazon S3 managed AES-256 server-side encryption (`ServerSideEncryption: 'AES256'`).
+- **No Long-Term Credentials in Lambda**: Lambda uses its IAM Execution Role credentials through the AWS SDK default credential provider chain. No static access keys exist in production environment variables.
+- **Cross-Region Decoupled Region Handling**: Uses `S3_REGION=us-east-1` for S3 clients without modifying Lambda's reserved runtime `AWS_REGION` (`ap-southeast-2`).
+- **Security Headers & Protection**: `helmet` enforces strict HTTP headers (`X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`).
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+### 1. Automated Test Suite (Vitest)
+CloudVault includes 40 comprehensive unit and integration tests spanning:
+- S3 Client service configuration and credential sanitization
+- User registration, login, token verification, and password rejection
+- Presigned upload URL generation and metadata validation
+- Share link generation and public token resolution
+- Lambda serverless-express adapter and API Gateway event proxying
+- Live cross-region S3 integration tests (PutObject, GetObject, HeadObject, DeleteObject)
+
+```bash
+npm test --prefix server
+```
+
+```text
+ ✓ tests/s3Service.test.js (5 tests)
+ ✓ tests/shares.test.js (6 tests)
+ ✓ tests/lambda.test.js (6 tests)
+ ✓ tests/files.test.js (9 tests)
+ ✓ tests/auth.test.js (8 tests)
+ ✓ tests/s3Integration.test.js (6 tests)
+
+ Test Files  6 passed (6)
+      Tests  40 passed (40)
+```
+
+### 2. Live Production Verification (22/22 Passing)
+An end-to-end verification script tested the live deployed production environment:
+
+| Category | Tests Executed | Status |
+|---|---|---|
+| **Health & Connectivity** | Production Health Check | **200 OK — PASS** |
+| **Authentication** | Register User 1, Login User 1, Register User 2 | **PASS** |
+| **Direct S3 Upload** | Request Presigned POST, S3 Binary Upload, Confirm Upload | **204 / 200 — PASS** |
+| **Metadata Integrity** | List Files, Verify File Size, MIME & Name in MongoDB | **200 OK — PASS** |
+| **Retrieval & Content** | Presigned GET Download, Byte-for-Byte Content Match | **200 OK — PASS** |
+| **Tenant Isolation** | User 2 attempting to download User 1 file | **404 Not Found — PASS** |
+| **Lifecycle Operations** | Rename, Star, Move to Trash, Verify Isolation, Restore, Permanent Delete | **PASS** |
+| **Security Boundaries** | Missing Auth (401), Invalid Token (401), .exe Block (400), Oversize File (400) | **PASS** |
+
+---
+
+## 💻 Local Development Setup
 
 ### Prerequisites
-- Node.js 20+ installed
-- MongoDB running locally OR a free MongoDB Atlas connection string
-- (Optional for live S3 uploads) AWS account with S3 bucket
+- [Node.js](https://nodejs.org/) v20.x or v22.x
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account or local MongoDB instance
+- (Optional for live S3 upload) AWS account with an S3 bucket
 
-### Step 1: Configure & Start Backend
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Amar3013/CloudVault.git
+cd CloudVault
+```
+
+### 2. Configure & Run Backend
 ```bash
 cd server
 npm install
+
+# Copy environment template
 cp .env.example .env
 ```
 
-Ensure `server/.env` contains your settings:
+Edit `server/.env`:
 ```env
 PORT=3000
 NODE_ENV=development
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/cloudvault?retryWrites=true&w=majority
-JWT_SECRET=super_secret_jwt_key_at_least_64_characters_long_for_security
-AWS_REGION=us-east-1
-S3_BUCKET_NAME=your-cloudvault-bucket-name
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/cloudvault?retryWrites=true&w=majority
+JWT_SECRET=your_jwt_secret_key_at_least_64_characters_long
+S3_REGION=us-east-1
+S3_BUCKET_NAME=your-s3-bucket-name
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 ALLOWED_ORIGINS=http://localhost:5173
 MAX_FILE_SIZE=26214400
 STORAGE_QUOTA=1073741824
 ```
 
-Start the server:
+Start the backend:
 ```bash
 npm run dev
 # Server running at http://localhost:3000
 ```
 
-### Step 2: Configure & Start Frontend
-In a second terminal:
+### 3. Configure & Run Frontend
+In a new terminal window:
 ```bash
 cd client
 npm install
-npm run dev
-# Frontend running at http://localhost:5173
+
+# Copy environment template
+cp .env.example .env
 ```
 
-Open `http://localhost:5173` to interact with CloudVault.
-
----
-
-## 7. Automated Testing
-
-Run the automated test suite covering authentication, file operations, S3 presigned generation, and rate limiting:
+Start the frontend:
 ```bash
-cd server
-npm test
+npm run dev
+# Local app running at http://localhost:5173
 ```
-
-**Test Status**: 3 test suites, 23 tests, 100% passing.
 
 ---
 
-## 8. Deployment to AWS
+## 📂 Project Structure
 
-CloudVault includes ready-to-deploy Infrastructure as Code configurations:
-- **Backend**: Deployed to AWS Lambda and Amazon S3 using **AWS SAM** (`template.yaml`).
-- **Frontend**: Deployed to **AWS Amplify Hosting** (`amplify.yml`).
+```text
+CloudVault/
+├── .env.example                  # Root environment variables template
+├── .gitignore                    # Git exclusion rules (credentials, node_modules, dist)
+├── amplify.yml                   # AWS Amplify Monorepo Build Specification
+├── template.yaml                 # AWS SAM CloudFormation Infrastructure as Code
+│
+├── client/                       # React 19 Frontend
+│   ├── .env.example              # Frontend environment template
+│   ├── index.html                # HTML entry point
+│   ├── package.json              # Frontend dependencies and scripts
+│   ├── vite.config.js            # Vite configuration with Tailwind CSS v4
+│   └── src/
+│       ├── components/           # UI components (FileIcon, Modal, UploadButton)
+│       ├── context/              # AuthContext (JWT management & session state)
+│       ├── hooks/                # useFileUpload (upload state & progress)
+│       ├── layouts/              # DashboardLayout (Sidebar, navigation, mobile drawer)
+│       ├── pages/                # LandingPage, LoginPage, RegisterPage, DashboardPage,
+│       │                         # MyFilesPage, StarredPage, SharedPage, TrashPage, etc.
+│       ├── services/             # Centralized Axios client & FileService
+│       └── utils/                # formatters.js (file sizes, dates, MIME sanitization)
+│
+├── server/                       # Node.js / Express Backend
+│   ├── .env.example              # Backend environment template
+│   ├── package.json              # Backend dependencies and scripts
+│   ├── app.js                    # Express application setup and route mounting
+│   ├── lambda.js                 # AWS Lambda handler (serverless-express adapter)
+│   ├── config/
+│   │   ├── aws.js                # AWS SDK S3 client & dynamic region resolver
+│   │   └── database.js           # Mongoose cached connection for Lambda
+│   ├── controllers/              # Business logic (auth, files, folders, shares, dashboard)
+│   ├── middleware/               # authenticate, errorHandler, Zod validate
+│   ├── models/                   # Mongoose schemas (User, File, Folder, ShareLink)
+│   ├── routes/                   # REST route definitions (/api/auth, /api/files, etc.)
+│   ├── services/                 # s3Service.js (Presigned POST/GET, HeadObject, DeleteObject)
+│   └── tests/                    # Vitest automated test suites
+```
 
-Refer to the exhaustive **[DEPLOYMENT.md](file:///c:/Users/linge/Desktop/CloudVault/DEPLOYMENT.md)** guide for detailed step-by-step instructions.
+---
+
+## 📸 User Interface & Screenshots
+
+> *Screenshots from the production deployment of CloudVault:*
+
+| Dashboard Overview | File Management & S3 Upload |
+| :---: | :---: |
+| ![Dashboard Overview](client/src/assets/hero.png) | *Upload progress with live direct-to-S3 progress bar* |
+
+*(Note: Additional full-resolution UI screenshots for the Files Grid, Trash Management, and Sharing modal can be added to `docs/screenshots/`)*
+
+---
+
+## 📡 API Reference
+
+All protected routes require the `Authorization: Bearer <JWT>` header.
+
+### Authentication (`/api/auth`)
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/auth/register` | Register new user account and return JWT |
+| `POST` | `/api/auth/login` | Authenticate user credentials and return JWT |
+| `GET` | `/api/auth/me` | Retrieve current authenticated user profile |
+| `POST` | `/api/auth/logout` | Client session termination |
+
+### Files (`/api/files`)
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/files` | List active files with pagination, search, and sorting |
+| `POST` | `/api/files/upload-url` | Generate S3 presigned POST policy and pending record |
+| `POST` | `/api/files/confirm` | Verify S3 upload via `HeadObject` and activate file |
+| `POST` | `/api/files/upload` | Direct fallback multipart upload through backend |
+| `GET` | `/api/files/:id/download` | Generate time-limited presigned S3 GET URL |
+| `PATCH` | `/api/files/:id` | Update file (rename or toggle star bookmark) |
+| `DELETE` | `/api/files/:id` | Soft delete file (moves to Trash) |
+| `POST` | `/api/files/:id/restore` | Restore file from Trash |
+| `DELETE` | `/api/files/:id/permanent`| Permanently delete object from S3 and MongoDB |
+| `POST` | `/api/files/:id/share` | Generate public share link (`1h`, `24h`, `7d`) |
+
+### Folders & System
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/folders` | List folders within parent directory |
+| `POST` | `/api/folders` | Create a new folder |
+| `GET` | `/api/dashboard` | Get storage quota metrics and file category counts |
+| `GET` | `/api/health` | Service health status and uptime |
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
