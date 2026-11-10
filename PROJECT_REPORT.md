@@ -19,8 +19,8 @@
 | Member # | Student Name | Assigned Role | Core Responsibilities |
 | :--- | :--- | :--- | :--- |
 | **Student 1** |Katha Amar Lingeshwar Reddy / B123065 | **Cloud Architect & Backend Lead** | System architecture design, AWS SAM template (`template.yaml`), AWS Lambda API integration, S3 bucket security policies, and IAM role configuration. |
-| **Student 2** | *[Student 2 Name / Roll No.]* | **Frontend Engineer & Security Specialist** | React 19 SPA, Tailwind CSS v4 design system, direct-to-S3 upload hook, JWT authentication, and Zod input validation schemas. |
-| **Student 3** | *[Student 3 Name / Roll No.]* | **Database, QA & DevOps Engineer** | MongoDB Atlas schema design, S3 presigned URL lifecycle, automated Vitest test suites (23 tests), AWS Amplify CI/CD, and presentation video demonstration. |
+| **Student 2** | Gullipalli Himanth/b123059 | **Frontend Engineer & Security Specialist** | React 19 SPA, Tailwind CSS v4 design system, direct-to-S3 upload hook, JWT authentication, and Zod input validation schemas. |
+| **Student 3** | Demudu Naidu/b123043 | **Database, QA & DevOps Engineer** | MongoDB Atlas schema design, S3 presigned URL lifecycle, automated Vitest test suites (23 tests), AWS Amplify CI/CD, and presentation video demonstration. |
 
 ---
 
